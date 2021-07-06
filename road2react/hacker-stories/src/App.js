@@ -1,7 +1,7 @@
 import React from "react";
 
 const App = () => {
-  const stories = [
+  const initialStories = [
     {
       title: "React ",
       url: "https://reactjs.org/",
@@ -33,6 +33,15 @@ const App = () => {
   };
 
   const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "React");
+  const [stories, setStories] = React.useState(initialStories);
+
+  const handleRemoveStory = (id) => {
+    const newStories = stories.filter(
+      (story) => id !== story.objectID
+    );
+
+    setStories(newStories);
+  };
 
   React.useEffect(() => {
     localStorage.setItem("search", searchTerm);
@@ -58,27 +67,32 @@ const App = () => {
       >
         Search
       </InputWithLabel>
-      <List list={searchedStories} />
+      <List list={searchedStories} onRemoveItem={handleRemoveStory} />
     </div>
   );
 };
 
-const List = ({ list }) => (
+const List = ({ list, onRemoveItem }) => (
   <ul>
-    {list.map(({ objectId, ...item }) => (
-      <Item key={objectId} {...item} />
+    {list.map((item) => (
+      <Item key={item.objectID} onRemoveItem={onRemoveItem} {...item} />
     ))}
   </ul>
 );
 
-const Item = ({ url, title, author, num_comments, points }) => (
+const Item = ({ onRemoveItem, url, title, author, num_comments, points, objectID }) => (
   <li>
     <span>
       <a href={url}>{title}</a>
     </span>
     <span>{author}</span>
     <span>{num_comments}</span>
-    <span>{points}</span>
+    <span>{points} </span>
+    <span>
+        <button type="button" onClick={() => onRemoveItem(objectID)}>
+          Dismiss
+        </button>
+      </span>
   </li>
 );
 
