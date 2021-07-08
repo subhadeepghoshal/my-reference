@@ -1,6 +1,7 @@
 import React from "react";
 
 const App = () => {
+  // Stories Data
   const initialStories = [
     {
       title: "React ",
@@ -20,11 +21,13 @@ const App = () => {
     },
   ];
 
+  // Simulator function for fetching stories from a remote store
   const getAsyncStories = () =>
     new Promise((resolve) =>
       setTimeout(() => resolve({ data: { stories: initialStories } }), 2000)
     );
 
+  // Custom Hook extending useState, manages state syncronyzed with local storage, used for SerachTerm
   const useSemiPersistentState = (key, initialState) => {
     const [value, setValue] = React.useState(
       localStorage.getItem(key) || initialState
@@ -37,11 +40,13 @@ const App = () => {
     return [value, setValue];
   };
 
+  // Initialising States
   const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "");
   const [stories, setStories] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
 
+  // Side effect - Loading stories asyncronously with loading and error flag handling
   React.useEffect(() => {
     setIsLoading(true);
 
@@ -53,9 +58,7 @@ const App = () => {
       .catch(() => setIsError(true));
   }, []);
 
-  React.useEffect(() => {
-    localStorage.setItem("search", searchTerm);
-  }, [searchTerm]);
+  // Event Handlers - Search and Remove
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -67,14 +70,15 @@ const App = () => {
     setStories(newStories);
   };
 
+  // Helper function - Filtering Stories simulating search
   const searchedStories = stories.filter(function (story) {
     return story.title.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
+  // RENDERER MAIN
   return (
     <div>
       <h1>My Hacker Stories</h1>
-      {/* <Search search={searchTerm} onSearch={handleSearch} /> */}
       <InputWithLabel
         id="search"
         value={searchTerm}
@@ -94,6 +98,8 @@ const App = () => {
   );
 };
 
+// RENDERER LIST (Parent - Main )
+
 const List = ({ list, onRemoveItem }) => (
   <ul>
     {list.map((item) => (
@@ -102,6 +108,7 @@ const List = ({ list, onRemoveItem }) => (
   </ul>
 );
 
+// RENDERER - ITEM (Parent - LIST)
 const Item = ({
   onRemoveItem,
   url,
@@ -126,17 +133,7 @@ const Item = ({
   </li>
 );
 
-const Search = ({ search, onSearch }) => {
-  return (
-    <div>
-      <label htmlFor="search">Search: </label>
-      <input id="search" type="text" value={search} onChange={onSearch} />
-      {/* <p>
-        Searching for <strong>{searchTerm}</strong>.
-      </p> */}
-    </div>
-  );
-};
+// RENDERER - InputWithLabel (Parent - Main)
 
 const InputWithLabel = ({
   id,
