@@ -40,9 +40,24 @@ const App = () => {
     return [value, setValue];
   };
 
-  // Initialising States
+  // Reducer function for handling events
+
+  const storiesReducer = (state, action) => {
+    switch (action.type) {
+      case "SET_STORIES":
+        return action.payload;
+      case "REMOVE_STORY":
+        return state.filter((story) => action.payload !== story.objectID);
+      default:
+        throw new Error();
+    }
+  };
+
+  // Initializing Reducer
+  const [stories, dispatchStories] = React.useReducer(storiesReducer, []);
+
+  // Initializing States
   const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "");
-  const [stories, setStories] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
 
@@ -52,7 +67,10 @@ const App = () => {
 
     getAsyncStories()
       .then((result) => {
-        setStories(result.data.stories);
+        dispatchStories({
+          type: "SET_STORIES",
+          payload: result.data.stories,
+        });
         setIsLoading(false);
       })
       .catch(() => setIsError(true));
@@ -65,9 +83,10 @@ const App = () => {
   };
 
   const handleRemoveStory = (id) => {
-    const newStories = stories.filter((story) => id !== story.objectID);
-
-    setStories(newStories);
+    dispatchStories({
+      type: "REMOVE_STORY",
+      payload: id,
+    });
   };
 
   // Helper function - Filtering Stories simulating search
