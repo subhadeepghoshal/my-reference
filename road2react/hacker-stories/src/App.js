@@ -20,6 +20,14 @@ const App = () => {
     },
   ];
 
+  const getAsyncStories = () =>
+  new Promise((resolve) =>
+    setTimeout(
+      () => resolve({ data: { stories: initialStories } }),
+      2000
+    )
+  );
+
   const useSemiPersistentState = (key, initialState) => {
     const [value, setValue] = React.useState(
       localStorage.getItem(key) || initialState
@@ -32,8 +40,23 @@ const App = () => {
     return [value, setValue];
   };
 
-  const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "React");
-  const [stories, setStories] = React.useState(initialStories);
+  const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "");
+  const [stories, setStories] = React.useState([]);
+
+  React.useEffect(() => {
+    getAsyncStories().then(result => {
+      setStories(result.data.stories);
+    });
+  }, []);
+
+  React.useEffect(() => {
+    localStorage.setItem("search", searchTerm);
+  }, [searchTerm]);
+
+
+  const handleSearch = (event) => {
+    setSearchTerm(event.target.value);
+  };
 
   const handleRemoveStory = (id) => {
     const newStories = stories.filter(
@@ -42,15 +65,8 @@ const App = () => {
 
     setStories(newStories);
   };
-
-  React.useEffect(() => {
-    localStorage.setItem("search", searchTerm);
-  }, [searchTerm]);
-
-  const handleSearch = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
+  
+  
   const searchedStories = stories.filter(function (story) {
     return story.title.toLowerCase().includes(searchTerm.toLowerCase());
   });
