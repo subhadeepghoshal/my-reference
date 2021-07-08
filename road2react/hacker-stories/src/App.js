@@ -21,12 +21,9 @@ const App = () => {
   ];
 
   const getAsyncStories = () =>
-  new Promise((resolve) =>
-    setTimeout(
-      () => resolve({ data: { stories: initialStories } }),
-      2000
-    )
-  );
+    new Promise((resolve) =>
+      setTimeout(() => resolve({ data: { stories: initialStories } }), 2000)
+    );
 
   const useSemiPersistentState = (key, initialState) => {
     const [value, setValue] = React.useState(
@@ -42,31 +39,34 @@ const App = () => {
 
   const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "");
   const [stories, setStories] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
 
   React.useEffect(() => {
-    getAsyncStories().then(result => {
-      setStories(result.data.stories);
-    });
+    setIsLoading(true);
+
+    getAsyncStories()
+      .then((result) => {
+        setStories(result.data.stories);
+        setIsLoading(false);
+      })
+      .catch(() => setIsError(true));
   }, []);
 
   React.useEffect(() => {
     localStorage.setItem("search", searchTerm);
   }, [searchTerm]);
 
-
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
   };
 
   const handleRemoveStory = (id) => {
-    const newStories = stories.filter(
-      (story) => id !== story.objectID
-    );
+    const newStories = stories.filter((story) => id !== story.objectID);
 
     setStories(newStories);
   };
-  
-  
+
   const searchedStories = stories.filter(function (story) {
     return story.title.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -83,7 +83,13 @@ const App = () => {
       >
         Search
       </InputWithLabel>
-      <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+      <hr />
+      {isError && <p>Something went wrong ...</p>}
+      {isLoading ? (
+        <p>Loading ...</p>
+      ) : (
+        <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+      )}
     </div>
   );
 };
@@ -96,7 +102,15 @@ const List = ({ list, onRemoveItem }) => (
   </ul>
 );
 
-const Item = ({ onRemoveItem, url, title, author, num_comments, points, objectID }) => (
+const Item = ({
+  onRemoveItem,
+  url,
+  title,
+  author,
+  num_comments,
+  points,
+  objectID,
+}) => (
   <li>
     <span>
       <a href={url}>{title}</a>
@@ -105,10 +119,10 @@ const Item = ({ onRemoveItem, url, title, author, num_comments, points, objectID
     <span>{num_comments}</span>
     <span>{points} </span>
     <span>
-        <button type="button" onClick={() => onRemoveItem(objectID)}>
-          Dismiss
-        </button>
-      </span>
+      <button type="button" onClick={() => onRemoveItem(objectID)}>
+        Dismiss
+      </button>
+    </span>
   </li>
 );
 
