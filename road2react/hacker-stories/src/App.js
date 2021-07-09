@@ -1,7 +1,7 @@
 import React from "react";
 
 const App = () => {
-  // Stories Data
+  /***  Stories Data ***/
   const initialStories = [
     {
       title: "React ",
@@ -21,13 +21,13 @@ const App = () => {
     },
   ];
 
-  // Simulator function for fetching stories from a remote store
+  /***  Simulator function for fetching stories from a remote store ***/
   const getAsyncStories = () =>
     new Promise((resolve) =>
       setTimeout(() => resolve({ data: { stories: initialStories } }), 2000)
     );
 
-  // Custom Hook extending useState, manages state syncronyzed with local storage, used for SerachTerm
+  /***  Custom Hook extending useState, manages state syncronyzed with local storage, used for SerachTerm ***/
   const useSemiPersistentState = (key, initialState) => {
     const [value, setValue] = React.useState(
       localStorage.getItem(key) || initialState
@@ -40,43 +40,67 @@ const App = () => {
     return [value, setValue];
   };
 
-  // Reducer function for handling events
+  /***  Reducer function for handling events - used in usedReducer  hook for managing state for stories ***/
 
   const storiesReducer = (state, action) => {
     switch (action.type) {
-      case "SET_STORIES":
-        return action.payload;
+      case "STORIES_FETCH_INIT":
+        return {
+          ...state,
+          isLoading: true,
+          isError: false,
+        };
+      case "STORIES_FETCH_SUCCESS":
+        return {
+          ...state,
+          isLoading: false,
+          isError: false,
+          data: action.payload,
+        };
+      case "STORIES_FETCH_FAILURE":
+        return {
+          ...state,
+          isLoading: false,
+          isError: true,
+        };
       case "REMOVE_STORY":
-        return state.filter((story) => action.payload !== story.objectID);
+        return {
+          ...state,
+          data: state.data.filter(
+            (story) => action.payload.id !== story.objectID
+          ),
+        };
+
       default:
         throw new Error();
     }
   };
 
-  // Initializing Reducer
-  const [stories, dispatchStories] = React.useReducer(storiesReducer, []);
+  /***  Initializing Reducer ***/
+  const [stories, dispatchStories] = React.useReducer(storiesReducer, {
+    data: [],
+    isLoading: false,
+    isError: false,
+  });
 
-  // Initializing States
+  /***  Initializing States ***/
   const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "");
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isError, setIsError] = React.useState(false);
 
-  // Side effect - Loading stories asyncronously with loading and error flag handling
+  /*** Side effect - Loading stories asyncronously with loading and error flag handling ***/
   React.useEffect(() => {
-    setIsLoading(true);
+    dispatchStories({ type: "STORIES_FETCH_INIT" });
 
     getAsyncStories()
       .then((result) => {
         dispatchStories({
-          type: "SET_STORIES",
+          type: "STORIES_FETCH_SUCCESS",
           payload: result.data.stories,
         });
-        setIsLoading(false);
       })
-      .catch(() => setIsError(true));
+      .catch(() => dispatchStories({ type: "STORIES_FETCH_INIT" }));
   }, []);
 
-  // Event Handlers - Search and Remove
+  /***  Event Handlers - Search and Remove ***/
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -85,16 +109,16 @@ const App = () => {
   const handleRemoveStory = (id) => {
     dispatchStories({
       type: "REMOVE_STORY",
-      payload: id,
+      payload: {id},
     });
   };
 
-  // Helper function - Filtering Stories simulating search
-  const searchedStories = stories.filter(function (story) {
+  /***  Helper function - Filtering Stories simulating search ***/
+  const searchedStories = stories.data.filter(function (story) {
     return story.title.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  // RENDERER MAIN
+  /***  RENDERER MAIN ***/
   return (
     <div>
       <h1>My Hacker Stories</h1>
@@ -107,8 +131,8 @@ const App = () => {
         Search
       </InputWithLabel>
       <hr />
-      {isError && <p>Something went wrong ...</p>}
-      {isLoading ? (
+      {stories.isError && <p>Something went wrong ...</p>}
+      {stories.isLoading ? (
         <p>Loading ...</p>
       ) : (
         <List list={searchedStories} onRemoveItem={handleRemoveStory} />
@@ -117,7 +141,7 @@ const App = () => {
   );
 };
 
-// RENDERER LIST (Parent - Main )
+/*** RENDERER LIST (Parent - Main ) ***/
 
 const List = ({ list, onRemoveItem }) => (
   <ul>
@@ -127,7 +151,7 @@ const List = ({ list, onRemoveItem }) => (
   </ul>
 );
 
-// RENDERER - ITEM (Parent - LIST)
+/*** RENDERER - ITEM (Parent - LIST) ***/
 const Item = ({
   onRemoveItem,
   url,
@@ -152,7 +176,7 @@ const Item = ({
   </li>
 );
 
-// RENDERER - InputWithLabel (Parent - Main)
+/*** RENDERER - InputWithLabel (Parent - Main) ***/
 
 const InputWithLabel = ({
   id,
