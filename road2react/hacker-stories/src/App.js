@@ -1,4 +1,5 @@
 import React from "react";
+import axios from "axios";
 const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
 
 const App = () => {
@@ -65,19 +66,18 @@ const App = () => {
 
   /*** Side effect - Loading stories asyncronously with loading and error flag handling ***/
   const handleFetchStories = React.useCallback(() => {
-
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    fetch(url) // B
-      .then((response) => response.json()) // C
+    axios
+      .get(url)
       .then((result) => {
         dispatchStories({
           type: "STORIES_FETCH_SUCCESS",
-          payload: result.hits,
+          payload: result.data.hits,
         });
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_INIT" }));
-  },[url]);
+  }, [url]);
 
   React.useEffect(() => {
     handleFetchStories(); // C
