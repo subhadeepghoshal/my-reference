@@ -61,13 +61,14 @@ const App = () => {
   /***  Initializing States ***/
   const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "");
 
+  const [url, setUrl] = React.useState(`${API_ENDPOINT}${searchTerm}`);
+
   /*** Side effect - Loading stories asyncronously with loading and error flag handling ***/
   const handleFetchStories = React.useCallback(() => {
-    if (!searchTerm) return;
 
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    fetch(`${API_ENDPOINT}${searchTerm}`) // B
+    fetch(url) // B
       .then((response) => response.json()) // C
       .then((result) => {
         dispatchStories({
@@ -76,7 +77,7 @@ const App = () => {
         });
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_INIT" }));
-  }, [searchTerm]);
+  },[url]);
 
   React.useEffect(() => {
     handleFetchStories(); // C
@@ -84,15 +85,19 @@ const App = () => {
 
   /***  Event Handlers - Search and Remove ***/
 
-  const handleSearch = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
   const handleRemoveStory = (id) => {
     dispatchStories({
       type: "REMOVE_STORY",
       payload: { id },
     });
+  };
+
+  const handleSearchInput = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearchSubmit = () => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
   };
 
   /***  RENDERER MAIN ***/
@@ -103,10 +108,13 @@ const App = () => {
         id="search"
         value={searchTerm}
         isFocused
-        onInputChange={handleSearch}
+        onInputChange={handleSearchInput}
       >
         Search
       </InputWithLabel>
+      <button type="button" disabled={!searchTerm} onClick={handleSearchSubmit}>
+        Submit
+      </button>
       <hr />
       {stories.isError && <p>Something went wrong ...</p>}
       {stories.isLoading ? (
