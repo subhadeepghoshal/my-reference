@@ -64,9 +64,11 @@ const App = () => {
 
   /*** Side effect - Loading stories asyncronously with loading and error flag handling ***/
   React.useEffect(() => {
+    if (!searchTerm) return;
+
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    fetch(`${API_ENDPOINT}react`) // B
+    fetch(`${API_ENDPOINT}${searchTerm}`) // B
       .then((response) => response.json()) // C
       .then((result) => {
         dispatchStories({
@@ -75,7 +77,7 @@ const App = () => {
         });
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_INIT" }));
-  }, []);
+  }, [searchTerm]);
 
   /***  Event Handlers - Search and Remove ***/
 
@@ -89,11 +91,6 @@ const App = () => {
       payload: {id},
     });
   };
-
-  /***  Helper function - Filtering Stories simulating search ***/
-  const searchedStories = stories.data.filter(function (story) {
-    return story.title.toLowerCase().includes(searchTerm.toLowerCase());
-  });
 
   /***  RENDERER MAIN ***/
   return (
@@ -112,7 +109,7 @@ const App = () => {
       {stories.isLoading ? (
         <p>Loading ...</p>
       ) : (
-        <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+        <List list={stories.data} onRemoveItem={handleRemoveStory} />
       )}
     </div>
   );
