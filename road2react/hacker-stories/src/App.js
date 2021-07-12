@@ -1,8 +1,7 @@
 import React from "react";
-const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
+const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
 
 const App = () => {
-
   /***  Custom Hook extending useState, manages state syncronyzed with local storage, used for SerachTerm ***/
   const useSemiPersistentState = (key, initialState) => {
     const [value, setValue] = React.useState(
@@ -63,7 +62,7 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "");
 
   /*** Side effect - Loading stories asyncronously with loading and error flag handling ***/
-  React.useEffect(() => {
+  const handleFetchStories = React.useCallback(() => {
     if (!searchTerm) return;
 
     dispatchStories({ type: "STORIES_FETCH_INIT" });
@@ -79,6 +78,10 @@ const App = () => {
       .catch(() => dispatchStories({ type: "STORIES_FETCH_INIT" }));
   }, [searchTerm]);
 
+  React.useEffect(() => {
+    handleFetchStories(); // C
+  }, [handleFetchStories]);
+
   /***  Event Handlers - Search and Remove ***/
 
   const handleSearch = (event) => {
@@ -88,7 +91,7 @@ const App = () => {
   const handleRemoveStory = (id) => {
     dispatchStories({
       type: "REMOVE_STORY",
-      payload: {id},
+      payload: { id },
     });
   };
 
@@ -140,7 +143,7 @@ const Item = ({
       <a href={url}>{title}</a>
     </span>
     <span> {author} </span>
-    <span>{num_comments}  </span>
+    <span>{num_comments} </span>
     <span>{points} </span>
     <span>
       <button type="button" onClick={() => onRemoveItem(objectID)}>
