@@ -65,18 +65,19 @@ const App = () => {
   const [url, setUrl] = React.useState(`${API_ENDPOINT}${searchTerm}`);
 
   /*** Side effect - Loading stories asyncronously with loading and error flag handling ***/
-  const handleFetchStories = React.useCallback(() => {
+  const handleFetchStories = React.useCallback(async () => {
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    axios
-      .get(url)
-      .then((result) => {
-        dispatchStories({
-          type: "STORIES_FETCH_SUCCESS",
-          payload: result.data.hits,
-        });
-      })
-      .catch(() => dispatchStories({ type: "STORIES_FETCH_INIT" }));
+    try {
+      const result = await axios.get(url);
+
+      dispatchStories({
+        type: "STORIES_FETCH_SUCCESS",
+        payload: result.data.hits,
+      });
+    } catch {
+      dispatchStories({ type: "STORIES_FETCH_INIT" });
+    }
   }, [url]);
 
   React.useEffect(() => {
