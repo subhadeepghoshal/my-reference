@@ -1,7 +1,7 @@
 import React, { Component, useEffect, useCallback, useState } from "react";
 import axios from "axios";
 import RepoReducer from "./reducers/RepoReducer"
-import {GET_ORGANIZATION} from "./gql/Query"
+import {GET_ORGANIZATION, GET_REPOSITORY_OF_ORGANIZATION,GET_ISSUES_OF_REPOSITORY} from "./gql/Query"
 import Organization from "./components/Organization";
 
 const TITLE = "React GraphQL GitHub Client";
@@ -24,12 +24,14 @@ const App = () => {
     isError: false,
   });
 
-  const onFetchFromGitHub = useCallback(async () => {
+  const onFetchFromGitHub = useCallback(async (path) => {
+    const [organization, repository] = path.split('/');
+
     dispatchRepo({ type: "REPO_FETCH_INIT" });
 
     try {
       const result = await axiosGitHubGraphQL.post("", {
-        query: GET_ORGANIZATION,
+        query: GET_ISSUES_OF_REPOSITORY(organization, repository)
       });
 
       dispatchRepo({
@@ -43,10 +45,11 @@ const App = () => {
   });
 
   useEffect(() => {
-    onFetchFromGitHub();
+    onFetchFromGitHub(path);
   }, [path]);
 
   const onSubmit = (event) => {
+    onFetchFromGitHub(path);
     event.preventDefault();
   };
 

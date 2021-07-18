@@ -1,3 +1,5 @@
+import Repository from "./Repository";
+
 const Organization = ({ organization }) => {
   return (
     <div>
@@ -5,6 +7,7 @@ const Organization = ({ organization }) => {
         <strong>Issues from Organization:</strong>
         <a href={organization.url}>{organization.name}</a>
       </p>
+      <Repository repository={organization.repository} />
     </div>
   );
 };
