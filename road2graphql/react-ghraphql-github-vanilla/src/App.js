@@ -1,5 +1,8 @@
 import React, { Component, useEffect, useCallback, useState } from "react";
 import axios from "axios";
+import RepoReducer from "./reducers/RepoReducer"
+import {GET_ORGANIZATION} from "./gql/Query"
+import Organization from "./components/Organization";
 
 const TITLE = "React GraphQL GitHub Client";
 const axiosGitHubGraphQL = axios.create({
@@ -9,49 +12,13 @@ const axiosGitHubGraphQL = axios.create({
   },
 });
 
-const GET_ORGANIZATION = `
-  {
-    organization(login: "the-road-to-learn-react") {
-      name
-      url
-    }
-  }
-`;
-
 const App = () => {
   const [path, setPath] = useState(
     "the-road-to-learn-react/the-road-to-learn-react"
   );
-  const [organization, setOrganization] = useState({ url: "", name: "" });
-
-  const repoReducer = (state, action) => {
-    switch (action.type) {
-      case "REPO_FETCH_INIT":
-        return {
-          ...state,
-          isLoading: true,
-          isError: false,
-        };
-      case "REPO_FETCH_SUCCESS":
-        return {
-          ...state,
-          isLoading: false,
-          isError: false,
-          organization: action.payload.data.organization,
-        };
-      case "REPO_FETCH_FAILURE":
-        return {
-          ...state,
-          isLoading: false,
-          isError: true,
-        };
-      default:
-        throw new Error();
-    }
-  };
-
+  
   /***  Initializing Reducer ***/
-  const [repo, dispatchRepo] = React.useReducer(repoReducer, {
+  const [repo, dispatchRepo] = React.useReducer(RepoReducer, {
     data: [],
     isLoading: false,
     isError: false,
@@ -69,16 +36,15 @@ const App = () => {
         type: "REPO_FETCH_SUCCESS",
         payload: result.data,
       });
-
-      console.log(repo.organization);
-    } catch {
+     
+     } catch {
       dispatchRepo({ type: "REPO_FETCH_FAILURE" });
     }
   });
 
   useEffect(() => {
     onFetchFromGitHub();
-  }, [path, organization]);
+  }, [path]);
 
   const onSubmit = (event) => {
     event.preventDefault();
@@ -87,15 +53,6 @@ const App = () => {
   const onChange = (event) => {
     setPath({ path: event.target.value });
   };
-
-  const Organization = ({ organization }) => (
-    <div>
-      <p>
-        <strong>Issues from Organization:</strong>
-        <a href={organization.url}>{organization.name}</a>
-      </p>
-    </div>
-  );
 
   return (
     <div>
@@ -113,7 +70,7 @@ const App = () => {
         <button type="submit">Search</button>
       </form>
       <hr />
-      {organization ? (
+      {repo.organization ? (
         <Organization organization={repo.organization} />
       ) : (
         <p>No information yet ...</p>
