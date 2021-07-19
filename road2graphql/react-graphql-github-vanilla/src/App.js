@@ -1,10 +1,14 @@
-import React, { Component, useEffect, useCallback, useState } from "react";
+import React, { Component } from "react";
 import axios from "axios";
-import RepoReducer from "./reducers/RepoReducer"
-import {GET_ORGANIZATION, GET_REPOSITORY_OF_ORGANIZATION,GET_ISSUES_OF_REPOSITORY} from "./gql/Query"
+import {
+  GET_ORGANIZATION,
+  GET_REPOSITORY_OF_ORGANIZATION,
+  GET_ISSUES_OF_REPOSITORY,
+} from "./gql/Query";
 import Organization from "./components/Organization";
 
 const TITLE = "React GraphQL GitHub Client";
+
 const axiosGitHubGraphQL = axios.create({
   baseURL: "https://api.github.com/graphql",
   headers: {
@@ -12,74 +16,72 @@ const axiosGitHubGraphQL = axios.create({
   },
 });
 
-const App = () => {
-  const [path, setPath] = useState(
-    "the-road-to-learn-react/the-road-to-learn-react"
-  );
-  
-  /***  Initializing Reducer ***/
-  const [repo, dispatchRepo] = React.useReducer(RepoReducer, {
-    data: [],
-    isLoading: false,
-    isError: false,
+const resolveIssuesQuery = (queryResult) => () => ({
+  organization: queryResult.data.data.organization,
+  errors: queryResult.data.errors,
+});
+
+const getIssuesOfRepository = (path) => {
+  const [organization, repository] = path.split("/");
+
+  return axiosGitHubGraphQL.post("", {
+    query: GET_ISSUES_OF_REPOSITORY,
+    variables: { organization, repository },
   });
+};
+class App extends Component {
+  state = {
+    path: "the-road-to-learn-react/the-road-to-learn-react",
+    organization: null,
+    errors: null,
+  };
 
-  const onFetchFromGitHub = useCallback(async (path) => {
-    const [organization, repository] = path.split('/');
+  onFetchFromGitHub = (path) => {
+    getIssuesOfRepository(path).then((queryResult) =>
+      this.setState(resolveIssuesQuery(queryResult))
+    );
+  };
 
-    dispatchRepo({ type: "REPO_FETCH_INIT" });
+  componentDidMount() {
+    this.onFetchFromGitHub(this.state.path);
+  }
 
-    try {
-      const result = await axiosGitHubGraphQL.post("", {
-        query: GET_ISSUES_OF_REPOSITORY(organization, repository)
-      });
-
-      dispatchRepo({
-        type: "REPO_FETCH_SUCCESS",
-        payload: result.data,
-      });
-     
-     } catch {
-      dispatchRepo({ type: "REPO_FETCH_FAILURE" });
-    }
-  });
-
-  useEffect(() => {
-    onFetchFromGitHub(path);
-  }, [path]);
-
-  const onSubmit = (event) => {
-    onFetchFromGitHub(path);
+  onSubmit = (event) => {
+    this.onFetchFromGitHub(this.state.path);
     event.preventDefault();
   };
 
-  const onChange = (event) => {
-    setPath({ path: event.target.value });
+  onChange = (event) => {
+    this.setState({ path: event.target.value });
   };
 
-  return (
-    <div>
-      <h1>{TITLE}</h1>
+  render() {
+    const { path, organization, errors } = this.state;
 
-      <form onSubmit={onSubmit}>
-        <label htmlFor="url">Show open issues for https://github.com/</label>
-        <input
-          id="url"
-          type="text"
-          value={path}
-          onChange={onChange}
-          style={{ width: "300px" }}
-        />
-        <button type="submit">Search</button>
-      </form>
-      <hr />
-      {repo.organization ? (
-        <Organization organization={repo.organization} />
-      ) : (
-        <p>No information yet ...</p>
-      )}
-    </div>
-  );
-};
+    return (
+      <div>
+        <h1>{TITLE}</h1>
+
+        <form onSubmit={this.onSubmit}>
+          <label htmlFor="url">Show open issues for https://github.com/</label>
+          <input
+            id="url"
+            type="text"
+            value={path}
+            onChange={this.onChange}
+            style={{ width: "300px" }}
+          />
+          <button type="submit">Search</button>
+        </form>
+        <hr />
+        {organization ? (
+          <Organization organization={organization} errors={errors} />
+        ) : (
+          <p>No information yet ...</p>
+        )}
+      </div>
+    );
+  }
+}
 
 export default App;

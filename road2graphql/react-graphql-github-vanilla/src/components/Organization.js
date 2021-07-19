@@ -1,6 +1,15 @@
 import Repository from "./Repository";
 
-const Organization = ({ organization }) => {
+const Organization = ({ organization ,errors }) => {
+  if (errors) {
+    return (
+      <p>
+        <strong>Something went wrong:</strong>
+        {errors.map((error) => error.message).join(" ")}
+      </p>
+    );
+  }
+
   return (
     <div>
       <p>
@@ -11,4 +20,4 @@ const Organization = ({ organization }) => {
     </div>
   );
 };
-export default Organization
+export default Organization;
