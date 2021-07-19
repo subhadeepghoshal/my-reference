@@ -19,20 +19,36 @@ const GET_REPOSITORY_OF_ORGANIZATION = `
 `;
 
 const GET_ISSUES_OF_REPOSITORY = `
-  query ($organization: String!, $repository: String!) {
+  query ($organization: String!, $repository: String!, $cursor: String
+    ) {
     organization(login: $organization) {
       name
       url
       repository(name: $repository) {
+        id
         name
         url
-        issues(last: 5) {
+        viewerHasStarred
+        issues(first: 5, after: $cursor, states: [OPEN]) {
           edges {
             node {
               id
               title
               url
+              reactions(last: 3) {
+                edges {
+                  node {
+                    id
+                    content
+                  }
+                }
+              }
             }
+          }
+          totalCount
+          pageInfo {
+            endCursor
+            hasNextPage
           }
         }
       }
@@ -40,5 +56,8 @@ const GET_ISSUES_OF_REPOSITORY = `
   }
 `;
 
-
-export { GET_ORGANIZATION , GET_REPOSITORY_OF_ORGANIZATION, GET_ISSUES_OF_REPOSITORY };
+export {
+  GET_ORGANIZATION,
+  GET_REPOSITORY_OF_ORGANIZATION,
+  GET_ISSUES_OF_REPOSITORY,
+};
